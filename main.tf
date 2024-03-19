@@ -57,3 +57,39 @@ resource "azurerm_public_ip" "tc-pip" {
 	allocation_method = "Dynamic"
 }
 
+resource "azurerm_network_interface" "tc-windows-nic" {
+	name = "Windows-NIC"
+	location = azurerm_resource_group.tc-rg.location
+	resource_group_name = azurerm_resource_group.tc-rg.name
+
+	ip_configuration {
+		name = "internal"
+		subnet_id = azurerm_subnet.tc-subnet-jumpbox.id
+		private_ip_address_allocation = "Dynamic"
+	}
+}
+
+resource "azurerm_windows_virtual_machine" "tc-windows" {
+	name = "TC-Windows"
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	location = azurerm_resource_group.tc-rg.location
+	size = "Standard_B1ms"
+	admin_username = "adminuser"
+	admin_password = "P@ssword123!"
+
+	network_interface_ids = [
+		azurerm_network_interface.tc-windows-nic.id
+	]
+
+	os_disk {
+		caching = "ReadWrite"
+		storage_account_type = "Standard_LRS"
+	}
+
+	source_image_reference {
+		publisher = "MicrosoftWindowsServer"
+		offer = "WindowsServer"
+		sku = "2016-Datacenter"
+		version = "latest"
+	}
+}
