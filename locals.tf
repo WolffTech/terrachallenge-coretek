@@ -8,4 +8,12 @@ locals {
 		Version = "Checkpoint2"
 		Deployment = "Terraform"
 	}
+
+	user_account = {
+		username = "adminuser"
+		password = "P@ssword123!"
+	}
+
+	location = "eastus"
+	vm_size = "Standard_B1ms"
 }

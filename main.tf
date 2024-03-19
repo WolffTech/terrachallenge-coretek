@@ -1,7 +1,7 @@
 # Resource Group and Network
 resource "azurerm_resource_group" "tc-rg" {
 	name = "TC-Checkpoint1"
-	location = "eastus"
+	location = local.location
 	tags = local.tags
 }
 
@@ -88,7 +88,7 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 	name = "TC-Linux"
 	location = azurerm_resource_group.tc-rg.location
 	resource_group_name = azurerm_resource_group.tc-rg.name
-	size = "Standard_B1ms"
+	size = local.vm_size
 	admin_username = "adminuser"
 
 	network_interface_ids = [
@@ -96,7 +96,7 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 	]
 
 	admin_ssh_key {
-		username = "adminuser"
+		username = local.user_account.username
 		public_key = tls_private_key.linux-key.public_key_openssh
 	}
 
@@ -133,9 +133,9 @@ resource "azurerm_windows_virtual_machine" "tc-windows" {
 	name = "TC-Windows"
 	resource_group_name = azurerm_resource_group.tc-rg.name
 	location = azurerm_resource_group.tc-rg.location
-	size = "Standard_B1ms"
-	admin_username = "adminuser"
-	admin_password = "P@ssword123!"
+	size = local.vm_size
+	admin_username = local.user_account.username
+	admin_password = local.user_account.password
 
 	network_interface_ids = [
 		azurerm_network_interface.tc-windows-nic.id
