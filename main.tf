@@ -163,7 +163,7 @@ resource "azurerm_recovery_services_vault" "tc-rsv" {
 	resource_group_name = azurerm_resource_group.tc-rg.name
 	sku = "Standard"
 
-	soft_delete_enabled = true
+	soft_delete_enabled = false
 }
 
 resource "azurerm_backup_policy_vm" "tc-rsp" {
