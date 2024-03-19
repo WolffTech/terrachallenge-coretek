@@ -71,6 +71,12 @@ resource "azurerm_network_interface" "tc-linux-nic" {
 	}
 }
 
+# - Private Key for SSH
+resource "tls_private_key" "linux-key" {
+	algorithm = "RSA"
+	rsa_bits = 4096
+}
+
 resource "azurerm_linux_virtual_machine" "tc-linux" {
 	name = "TC-Linux"
 	location = azurerm_resource_group.tc-rg.location
@@ -84,7 +90,7 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 
 	admin_ssh_key {
 		username = "adminuser"
-		public_key = file(~/.ssh/publickey)
+		public_key = tls_private_key.linux-key.public_key_openssh
 	}
 
 	os_disk {
