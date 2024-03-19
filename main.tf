@@ -155,3 +155,13 @@ resource "azurerm_windows_virtual_machine" "tc-windows" {
 
 	tags = local.tags
 }
+
+# Recovery Services Vault & Backup Policy
+resource "azurerm_recovery_services_vault" "tc-rsv" {
+	name = "TC-RecoveryVault"
+	location = azurerm_resource_group.tc-rg.location
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	sku = "Standard"
+
+	soft_delete_enabled = true
+}
