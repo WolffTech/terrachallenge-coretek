@@ -57,6 +57,51 @@ resource "azurerm_public_ip" "tc-pip" {
 	allocation_method = "Dynamic"
 }
 
+# Linux VM
+
+resource "azurerm_network_interface" "tc-linux-nic" {
+	name = "Linux-NIC"
+	location = azurerm_resource_group.tc-rg.location
+	resource_group_name = azurerm_resource_group.tc-rg.name
+
+	ip_configuration {
+		name = "internal"
+		subnet_id = azurerm_subnet.tc-subnet-web.id
+		private_ip_address_allocation = "Dynamic"
+	}
+}
+
+resource "azurerm_linux_virtual_machine" "tc-linux" {
+	name = "TC-Linux"
+	location = azurerm_resource_group.tc-rg.location
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	size = "Standard_B1ms"
+	admin_username = "adminuser"
+
+	network_interface_ids = [
+		azurerm_network_interface.tc-linux-nic.id
+	]
+
+	admin_ssh_key {
+		username = "adminuser"
+		public_key = file(~/.ssh/publickey)
+	}
+
+	os_disk {
+		caching = "ReadWrite"
+		storage_account_type = "Standard_LRS"
+	}
+
+	source_image_reference {
+		publisher = "Canonical"
+		offer = "0001-com-ubuntu-server-jammy"
+		sku = "22_04-lts"
+		version = "latest"
+	}
+}
+
+# Windows VM
+
 resource "azurerm_network_interface" "tc-windows-nic" {
 	name = "Windows-NIC"
 	location = azurerm_resource_group.tc-rg.location
