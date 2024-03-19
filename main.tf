@@ -2,6 +2,7 @@
 resource "azurerm_resource_group" "tc-rg" {
 	name = "TC-Checkpoint1"
 	location = "eastus"
+	tags = local.tags
 }
 
 resource "azurerm_network_security_group" "tc-sg" {
@@ -20,6 +21,8 @@ resource "azurerm_network_security_group" "tc-sg" {
 		source_address_prefix = "*"
 		destination_address_prefix = "*"
 	}
+
+	tags = local.tags
 }
 
 resource "azurerm_virtual_network" "tc-vnet" {
@@ -27,6 +30,7 @@ resource "azurerm_virtual_network" "tc-vnet" {
 	resource_group_name = azurerm_resource_group.tc-rg.name
 	location = azurerm_resource_group.tc-rg.location
 	address_space = ["10.0.0.0/16"]
+	tags = local.tags
 }
 
 resource "azurerm_subnet" "tc-subnet-web" {
@@ -55,6 +59,7 @@ resource "azurerm_public_ip" "tc-pip" {
 	resource_group_name = azurerm_resource_group.tc-rg.name
 	location = azurerm_resource_group.tc-rg.location
 	allocation_method = "Dynamic"
+	tags = local.tags
 }
 
 # Linux VM
@@ -69,6 +74,8 @@ resource "azurerm_network_interface" "tc-linux-nic" {
 		subnet_id = azurerm_subnet.tc-subnet-web.id
 		private_ip_address_allocation = "Dynamic"
 	}
+
+	tags = local.tags
 }
 
 # - Private Key for SSH
@@ -104,6 +111,8 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 		sku = "22_04-lts"
 		version = "latest"
 	}
+
+	tags = local.tags
 }
 
 # Windows VM
@@ -143,4 +152,6 @@ resource "azurerm_windows_virtual_machine" "tc-windows" {
 		sku = "2016-Datacenter"
 		version = "latest"
 	}
+
+	tags = local.tags
 }
