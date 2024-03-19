@@ -165,3 +165,18 @@ resource "azurerm_recovery_services_vault" "tc-rsv" {
 
 	soft_delete_enabled = true
 }
+
+resource "azurerm_backup_policy_vm" "tc-rsp" {
+	name = "TC-BackupPolicy"
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
+
+	backup {
+		frequency = "Daily"
+		time = "23:00"
+	}
+
+	retention_daily {
+		count = 10
+	}
+}
