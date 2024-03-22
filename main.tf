@@ -1,6 +1,6 @@
 # Resource Group and Network
 resource "azurerm_resource_group" "tc-rg" {
-	name = "TC-Checkpoint1"
+	name = "TerraChallenge"
 	location = local.location
 	tags = local.tags
 }
