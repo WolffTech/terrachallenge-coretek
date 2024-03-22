@@ -164,6 +164,7 @@ resource "azurerm_recovery_services_vault" "tc-rsv" {
 	sku = "Standard"
 
 	soft_delete_enabled = false
+
 }
 
 resource "azurerm_backup_policy_vm" "tc-rsp" {
@@ -185,5 +186,12 @@ resource "azurerm_backup_protected_vm" "tc-linux-backup" {
 	resource_group_name = azurerm_resource_group.tc-rg.name
 	recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
 	source_vm_id = azurerm_linux_virtual_machine.tc-linux.id
+	backup_policy_id = azurerm_backup_policy_vm.tc-rsp.id
+}
+
+resource "azurerm_backup_protected_vm" "tc-windows-backup" {
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
+	source_vm_id = azurerm_windows_virtual_machine.tc-windows.id
 	backup_policy_id = azurerm_backup_policy_vm.tc-rsp.id
 }
