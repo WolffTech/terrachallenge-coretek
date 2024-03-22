@@ -63,7 +63,6 @@ resource "azurerm_public_ip" "tc-pip" {
 }
 
 # Linux VM
-
 resource "azurerm_network_interface" "tc-linux-nic" {
 	name = "Linux-NIC"
 	location = azurerm_resource_group.tc-rg.location
@@ -116,7 +115,6 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 }
 
 # Windows VM
-
 resource "azurerm_network_interface" "tc-windows-nic" {
 	name = "Windows-NIC"
 	location = azurerm_resource_group.tc-rg.location
@@ -164,6 +162,8 @@ resource "azurerm_recovery_services_vault" "tc-rsv" {
 	sku = "Standard"
 
 	soft_delete_enabled = false
+
+	tags = local.tags
 
 }
 
