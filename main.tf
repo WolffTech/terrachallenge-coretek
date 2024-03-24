@@ -1,7 +1,8 @@
 # Resource Group and Network
 resource "azurerm_resource_group" "tc-rg" {
-	name = "TC-Checkpoint1"
-	location = "eastus"
+	name = "TerraChallenge"
+	location = local.location
+	tags = local.tags
 }
 
 resource "azurerm_network_security_group" "tc-sg" {
@@ -20,6 +21,8 @@ resource "azurerm_network_security_group" "tc-sg" {
 		source_address_prefix = "*"
 		destination_address_prefix = "*"
 	}
+
+	tags = local.tags
 }
 
 resource "azurerm_virtual_network" "tc-vnet" {
@@ -27,6 +30,7 @@ resource "azurerm_virtual_network" "tc-vnet" {
 	resource_group_name = azurerm_resource_group.tc-rg.name
 	location = azurerm_resource_group.tc-rg.location
 	address_space = ["10.0.0.0/16"]
+	tags = local.tags
 }
 
 resource "azurerm_subnet" "tc-subnet-web" {
@@ -55,10 +59,10 @@ resource "azurerm_public_ip" "tc-pip" {
 	resource_group_name = azurerm_resource_group.tc-rg.name
 	location = azurerm_resource_group.tc-rg.location
 	allocation_method = "Dynamic"
+	tags = local.tags
 }
 
 # Linux VM
-
 resource "azurerm_network_interface" "tc-linux-nic" {
 	name = "Linux-NIC"
 	location = azurerm_resource_group.tc-rg.location
@@ -69,6 +73,8 @@ resource "azurerm_network_interface" "tc-linux-nic" {
 		subnet_id = azurerm_subnet.tc-subnet-web.id
 		private_ip_address_allocation = "Dynamic"
 	}
+
+	tags = local.tags
 }
 
 # - Private Key for SSH
@@ -81,7 +87,7 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 	name = "TC-Linux"
 	location = azurerm_resource_group.tc-rg.location
 	resource_group_name = azurerm_resource_group.tc-rg.name
-	size = "Standard_B1ms"
+	size = local.vm_size
 	admin_username = "adminuser"
 
 	network_interface_ids = [
@@ -89,7 +95,7 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 	]
 
 	admin_ssh_key {
-		username = "adminuser"
+		username = local.user_account.username
 		public_key = tls_private_key.linux-key.public_key_openssh
 	}
 
@@ -104,10 +110,11 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 		sku = "22_04-lts"
 		version = "latest"
 	}
+
+	tags = local.tags
 }
 
 # Windows VM
-
 resource "azurerm_network_interface" "tc-windows-nic" {
 	name = "Windows-NIC"
 	location = azurerm_resource_group.tc-rg.location
@@ -124,9 +131,9 @@ resource "azurerm_windows_virtual_machine" "tc-windows" {
 	name = "TC-Windows"
 	resource_group_name = azurerm_resource_group.tc-rg.name
 	location = azurerm_resource_group.tc-rg.location
-	size = "Standard_B1ms"
-	admin_username = "adminuser"
-	admin_password = "P@ssword123!"
+	size = local.vm_size
+	admin_username = local.user_account.username
+	admin_password = local.user_account.password
 
 	network_interface_ids = [
 		azurerm_network_interface.tc-windows-nic.id
@@ -143,4 +150,48 @@ resource "azurerm_windows_virtual_machine" "tc-windows" {
 		sku = "2016-Datacenter"
 		version = "latest"
 	}
+
+	tags = local.tags
+}
+
+# Recovery Services Vault & Backup Policy
+resource "azurerm_recovery_services_vault" "tc-rsv" {
+	name = "TC-RecoveryVault"
+	location = azurerm_resource_group.tc-rg.location
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	sku = "Standard"
+
+	soft_delete_enabled = false
+
+	tags = local.tags
+
+}
+
+resource "azurerm_backup_policy_vm" "tc-rsp" {
+	name = "TC-BackupPolicy"
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
+
+	backup {
+		frequency = "Daily"
+		time = "23:00"
+	}
+
+	retention_daily {
+		count = 10
+	}
+}
+
+resource "azurerm_backup_protected_vm" "tc-linux-backup" {
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
+	source_vm_id = azurerm_linux_virtual_machine.tc-linux.id
+	backup_policy_id = azurerm_backup_policy_vm.tc-rsp.id
+}
+
+resource "azurerm_backup_protected_vm" "tc-windows-backup" {
+	resource_group_name = azurerm_resource_group.tc-rg.name
+	recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
+	source_vm_id = azurerm_windows_virtual_machine.tc-windows.id
+	backup_policy_id = azurerm_backup_policy_vm.tc-rsp.id
 }
