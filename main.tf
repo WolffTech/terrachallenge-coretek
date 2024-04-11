@@ -20,16 +20,16 @@ locals {
 }
 
 # Resource Group and Network
-resource "azurerm_resource_group" "tc-rg" {
-  name     = "TerraChallenge"
+module "resource_group" {
+  source = "./modules/resourcegroup"
+  base_name = "TerraChallenge"
   location = local.location
-  tags     = local.tags
 }
 
 resource "azurerm_network_security_group" "tc-sg" {
   name                = "TC-SecurityGroup"
-  location            = azurerm_resource_group.tc-rg.location
-  resource_group_name = azurerm_resource_group.tc-rg.name
+  location            = module.resource_group.rg_location_out
+  resource_group_name = module.resource_group.rg_name_out
 
   security_rule {
     name                       = "TC-SecurityGroupRule"
@@ -48,37 +48,37 @@ resource "azurerm_network_security_group" "tc-sg" {
 
 resource "azurerm_virtual_network" "tc-vnet" {
   name                = "TC-Network"
-  resource_group_name = azurerm_resource_group.tc-rg.name
-  location            = azurerm_resource_group.tc-rg.location
+  resource_group_name = module.resource_group.rg_name_out
+  location            = module.resource_group.rg_location_out
   address_space       = ["10.0.0.0/16"]
   tags                = local.tags
 }
 
 resource "azurerm_subnet" "tc-subnet-web" {
   name                 = "TC-Network-Web"
-  resource_group_name  = azurerm_resource_group.tc-rg.name
+  resource_group_name  = module.resource_group.rg_name_out
   virtual_network_name = azurerm_virtual_network.tc-vnet.name
   address_prefixes     = ["10.0.1.0/24"]
 }
 
 resource "azurerm_subnet" "tc-subnet-data" {
   name                 = "TC-Network-Data"
-  resource_group_name  = azurerm_resource_group.tc-rg.name
+  resource_group_name  = module.resource_group.rg_name_out
   virtual_network_name = azurerm_virtual_network.tc-vnet.name
   address_prefixes     = ["10.0.2.0/24"]
 }
 
 resource "azurerm_subnet" "tc-subnet-jumpbox" {
   name                 = "TC-Network-Jumpbox"
-  resource_group_name  = azurerm_resource_group.tc-rg.name
+  resource_group_name  = module.resource_group.rg_name_out
   virtual_network_name = azurerm_virtual_network.tc-vnet.name
   address_prefixes     = ["10.0.3.0/24"]
 }
 
 resource "azurerm_public_ip" "tc-pip" {
   name                = "TC-PublicIP"
-  resource_group_name = azurerm_resource_group.tc-rg.name
-  location            = azurerm_resource_group.tc-rg.location
+  resource_group_name = module.resource_group.rg_name_out
+  location            = module.resource_group.rg_location_out
   allocation_method   = "Dynamic"
   tags                = local.tags
 }
@@ -86,8 +86,8 @@ resource "azurerm_public_ip" "tc-pip" {
 # Linux VM
 resource "azurerm_network_interface" "tc-linux-nic" {
   name                = "Linux-NIC"
-  location            = azurerm_resource_group.tc-rg.location
-  resource_group_name = azurerm_resource_group.tc-rg.name
+  location            = module.resource_group.rg_location_out
+  resource_group_name = module.resource_group.rg_name_out
 
   ip_configuration {
     name                          = "internal"
@@ -106,8 +106,8 @@ resource "tls_private_key" "linux-key" {
 
 resource "azurerm_linux_virtual_machine" "tc-linux" {
   name                = "TC-Linux"
-  location            = azurerm_resource_group.tc-rg.location
-  resource_group_name = azurerm_resource_group.tc-rg.name
+  location            = module.resource_group.rg_location_out
+  resource_group_name = module.resource_group.rg_name_out
   size                = local.vm_size
   admin_username      = "adminuser"
 
@@ -138,8 +138,8 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 # Windows VM
 resource "azurerm_network_interface" "tc-windows-nic" {
   name                = "Windows-NIC"
-  location            = azurerm_resource_group.tc-rg.location
-  resource_group_name = azurerm_resource_group.tc-rg.name
+  location            = module.resource_group.rg_location_out
+  resource_group_name = module.resource_group.rg_name_out
 
   ip_configuration {
     name                          = "internal"
@@ -150,8 +150,8 @@ resource "azurerm_network_interface" "tc-windows-nic" {
 
 resource "azurerm_windows_virtual_machine" "tc-windows" {
   name                = "TC-Windows"
-  resource_group_name = azurerm_resource_group.tc-rg.name
-  location            = azurerm_resource_group.tc-rg.location
+  resource_group_name = module.resource_group.rg_name_out
+  location            = module.resource_group.rg_location_out
   size                = local.vm_size
   admin_username      = local.user_account.username
   admin_password      = local.user_account.password
@@ -178,8 +178,8 @@ resource "azurerm_windows_virtual_machine" "tc-windows" {
 # Recovery Services Vault & Backup Policy
 resource "azurerm_recovery_services_vault" "tc-rsv" {
   name                = "TC-RecoveryVault"
-  location            = azurerm_resource_group.tc-rg.location
-  resource_group_name = azurerm_resource_group.tc-rg.name
+  location            = module.resource_group.rg_location_out
+  resource_group_name = module.resource_group.rg_name_out
   sku                 = "Standard"
 
   soft_delete_enabled = false
@@ -190,7 +190,7 @@ resource "azurerm_recovery_services_vault" "tc-rsv" {
 
 resource "azurerm_backup_policy_vm" "tc-rsp" {
   name                = "TC-BackupPolicy"
-  resource_group_name = azurerm_resource_group.tc-rg.name
+  resource_group_name = module.resource_group.rg_name_out
   recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
 
   backup {
@@ -204,14 +204,14 @@ resource "azurerm_backup_policy_vm" "tc-rsp" {
 }
 
 resource "azurerm_backup_protected_vm" "tc-linux-backup" {
-  resource_group_name = azurerm_resource_group.tc-rg.name
+  resource_group_name = module.resource_group.rg_name_out
   recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
   source_vm_id        = azurerm_linux_virtual_machine.tc-linux.id
   backup_policy_id    = azurerm_backup_policy_vm.tc-rsp.id
 }
 
 resource "azurerm_backup_protected_vm" "tc-windows-backup" {
-  resource_group_name = azurerm_resource_group.tc-rg.name
+  resource_group_name = module.resource_group.rg_name_out
   recovery_vault_name = azurerm_recovery_services_vault.tc-rsv.name
   source_vm_id        = azurerm_windows_virtual_machine.tc-windows.id
   backup_policy_id    = azurerm_backup_policy_vm.tc-rsp.id
