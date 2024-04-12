@@ -19,11 +19,23 @@ locals {
   vm_size  = "Standard_B1ms"
 }
 
+data "azurerm_client_config" "current" {}
+
 # Resource Group and Network
 module "resource_group" {
-  source = "./modules/resourcegroup"
+  source    = "./modules/resourcegroup"
   base_name = "TerraChallenge"
-  location = local.location
+  location  = local.location
+}
+
+# Key Vault
+module "key_vault" {
+  source         = "./modules/keyvault"
+  key_vault_name = "TCKeyVault"
+  location       = module.resource_group.rg_location_out
+  rg_name        = module.resource_group.rg_name_out
+  tenant_id      = data.azurerm_client_config.current.tenant_id
+  object_id      = data.azurerm_client_config.current.object_id
 }
 
 resource "azurerm_network_security_group" "tc-sg" {
