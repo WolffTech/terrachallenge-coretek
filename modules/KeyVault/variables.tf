@@ -13,12 +13,3 @@ variable "rg_name" {
   description = "The name of the resource group"
 }
 
-variable "tenant_id" {
-  type = string
-  description = "The tenant ID"
-}
-
-variable "object_id" {
-  type = string
-  description = "The object ID"
-}
