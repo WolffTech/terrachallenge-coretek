@@ -28,7 +28,7 @@ module "resource_group" {
 # Key Vault
 module "key_vault" {
   source         = "./modules/keyvault"
-  key_vault_name = "TCKeyVault"
+  key_vault_name = "TCKeyVault2318843"
   location       = module.resource_group.rg_location_out
   rg_name        = module.resource_group.rg_name_out
 }
