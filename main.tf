@@ -105,6 +105,15 @@ resource "random_password" "vmpassgen" {
 }
 
 # Linux VM
+resource "azurerm_key_vault_secret" "admin_password_linux" {
+  name = "adminpasslinux"
+  value = random_password.vmpassgen.result
+  key_vault_id = module.key_vault.kv_id_out
+  depends_on = [
+    module.key_vault
+  ]
+}
+
 resource "azurerm_network_interface" "tc-linux-nic" {
   name                = "Linux-NIC"
   location            = module.resource_group.rg_location_out
@@ -157,6 +166,15 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
 }
 
 # Windows VM
+resource "azurerm_key_vault_secret" "admin_password_windows" {
+  name = "adminpasswindows"
+  value = random_password.vmpassgen.result
+  key_vault_id = module.key_vault.kv_id_out
+  depends_on = [
+    module.key_vault
+  ]
+}
+
 resource "azurerm_network_interface" "tc-windows-nic" {
   name                = "Windows-NIC"
   location            = module.resource_group.rg_location_out
