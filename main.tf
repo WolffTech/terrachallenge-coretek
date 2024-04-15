@@ -95,6 +95,15 @@ resource "azurerm_public_ip" "tc-pip" {
   tags                = local.tags
 }
 
+# Password Generator
+resource "random_password" "vmpassgen" {
+  length = 12
+  special = true
+  min_lower = 4
+  min_upper = 4
+  numeric = true
+}
+
 # Linux VM
 resource "azurerm_network_interface" "tc-linux-nic" {
   name                = "Linux-NIC"
