@@ -12,7 +12,6 @@ locals {
 
   user_account = {
     username = "adminuser"
-    password = "P@ssword123!"
   }
 
   location = "eastus"
@@ -140,6 +139,8 @@ resource "azurerm_linux_virtual_machine" "tc-linux" {
   resource_group_name = module.resource_group.rg_name_out
   size                = local.vm_size
   admin_username      = "adminuser"
+  admin_password      = azurerm_key_vault_secret.admin_password_linux.value
+
 
   network_interface_ids = [
     azurerm_network_interface.tc-linux-nic.id
@@ -193,7 +194,7 @@ resource "azurerm_windows_virtual_machine" "tc-windows" {
   location            = module.resource_group.rg_location_out
   size                = local.vm_size
   admin_username      = local.user_account.username
-  admin_password      = local.user_account.password
+  admin_password      = azurerm_key_vault_secret.admin_password_windows.value
 
   network_interface_ids = [
     azurerm_network_interface.tc-windows-nic.id
